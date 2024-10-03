@@ -97,11 +97,6 @@ resource "aws_key_pair" "instance" {
   }
 }
 
-data "aws_security_group" "intance_access" {
-  name = "All traffic from Opfa"
-  id   = "sg-b936f7d2"
-}
-
 resource "aws_launch_template" "debian_ssm_agent" {
   name = "Debian_SSM_agent"
   description = "A basic Debian instance with already installed SSM manager"
@@ -128,10 +123,6 @@ resource "aws_instance" "showcaseInstance" {
       "Name" = "ssm-showcase"
     }
   }
-
-  vpc_security_group_ids = [
-    data.aws_security_group.intance_access.id
-  ]
 
   iam_instance_profile = aws_iam_instance_profile.instance.name
 

@@ -1,5 +1,5 @@
 NAME=SSM-showcase
-HOST=i-0082f02cf168b4160
+INSTANCE_ID=i-0f68af85c7ebda67d
 
 terraform-plan:
 	@terraform init -reconfigure
@@ -12,4 +12,4 @@ terraform-destroy:
 	@terraform destroy -state=terraform-${NAME}.tfstate
 
 ssh:
-	@ssh admin@${HOST} -i ~/.ssh/ssm_showcase.pem -o "proxycommand aws --profile moneytec ssm start-session --target ${HOST} --document-name AWS-StartSSHSession"
+	@ssh admin@${INSTANCE_ID} -i ~/.ssh/ssm_showcase.pem -o Proxycommand="aws --profile opfa ssm start-session --target ${INSTANCE_ID} --document-name AWS-StartSSHSession"
