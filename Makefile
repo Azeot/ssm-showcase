@@ -1,5 +1,4 @@
 NAME=SSM-showcase
-INSTANCE_ID=i-0adb56e2bbad82238
 
 terraform-plan:
 	@terraform init -reconfigure
@@ -11,5 +10,10 @@ terraform-apply:
 terraform-destroy:
 	@terraform destroy -state=terraform-${NAME}.tfstate
 
-ssh:
-	@ssh admin@${INSTANCE_ID} -i ~/.ssh/ssm_showcase.pem -o Proxycommand="aws --profile opfa ssm start-session --target ${INSTANCE_ID} --document-name AWS-StartSSHSession"
+ssh-conf: ~/.ssh/config.d/${NAME}.ssh.conf
+
+~/.ssh/config.d/${NAME}.ssh.conf:
+	ln -s ${PWD}/${NAME}.ssh.conf ~/.ssh/config.d/${NAME}.ssh.conf
+
+payload:
+	dd if=/dev/zero of=100mb_file.bin bs=1M count=100
