@@ -1,5 +1,5 @@
 NAME=SSM-showcase
-INSTANCE_ID=i-0f68af85c7ebda67d
+INSTANCE_ID=i-0adb56e2bbad82238
 
 terraform-plan:
 	@terraform init -reconfigure

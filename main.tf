@@ -1,16 +1,25 @@
-data "aws_subnet" "selected" {
-  availability_zone = "eu-central-1a"
+resource "aws_s3_bucket" "artifacts_bucket" {
+  bucket        = "showcase.artifacts.bucket"
+  force_destroy = true
+  tags = {
+    "Name" = "ssm-showcase"
+  }
 }
 
-data "aws_iam_policy_document" "instance_assume_role_policy" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
+resource "aws_s3_bucket_lifecycle_configuration" "artifacts_bucket_lc" {
+  bucket = aws_s3_bucket.artifacts_bucket.bucket
+  rule {
+    id = "expire_all"
+    filter {}
+    status = "Enabled"
+    expiration {
+      days = 1
     }
   }
+}
+
+data "aws_subnet" "selected" {
+  availability_zone = "eu-central-1a"
 }
 
 resource "aws_iam_policy" "ssm_access" {
@@ -73,12 +82,41 @@ resource "aws_iam_policy" "ssm_access" {
 }
 
 resource "aws_iam_role" "instance" {
-  name                = "ssm-showcase"
-  assume_role_policy  = data.aws_iam_policy_document.instance_assume_role_policy.json
+  name = "ssm-showcase"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = ["sts:AssumeRole"]
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
   managed_policy_arns = [aws_iam_policy.ssm_access.arn]
   tags = {
     Name = "ssm-showcase"
   }
+}
+
+resource "aws_iam_role_policy" "instance_access_bucket" {
+  name = "Allow-bucket-access"
+  role = aws_iam_role.instance.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = ["s3:*"]
+        Resource = [
+          "${aws_s3_bucket.artifacts_bucket.arn}",
+          "${aws_s3_bucket.artifacts_bucket.arn}/*"
+        ]
+      }
+    ]
+  })
 }
 
 resource "aws_iam_instance_profile" "instance" {
@@ -98,17 +136,18 @@ resource "aws_key_pair" "instance" {
 }
 
 resource "aws_launch_template" "debian_ssm_agent" {
-  name = "Debian_SSM_agent"
+  name        = "Debian_SSM_agent"
   description = "A basic Debian instance with already installed SSM manager"
-  image_id = "ami-0584590e5f0e97daa" //Debian
-  user_data = filebase64("debian_ssm_template_userdata.sh")
+  image_id    = "ami-0584590e5f0e97daa" //Debian
+  user_data   = filebase64("debian_ssm_template_userdata.sh")
 
   tags = {
     Name = "ssm-showcase"
   }
 }
 
-resource "aws_instance" "showcaseInstance" {
+
+resource "aws_instance" "showcase_instance" {
   launch_template {
     name = aws_launch_template.debian_ssm_agent.name
   }
