@@ -1,5 +1,2 @@
-.terraform.lock.hcl
-.terraform
-*.plan
-*.backup
-*.bin
+.idea
+.vscode
