@@ -1,14 +1,45 @@
+---
 - name: SSM showcase
   hosts: all
+  module_defaults:
+    group/aws:
+      access_key: '{{ aws.access_key }}'
+      secret_key: '{{ aws.secret_key }}'
   vars:
     file: 100mb_file.bin
   tasks:
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name: python3-boto3
+      become: true
     - name: Copy the file normally
       ansible.builtin.copy:
         src: "files/{{ file }}"
         dest: "{{ file }}"
         mode: '640'
-    - name: Cleanup
+      tags:
+        - normal
+    - name: Upload on AWS S3
+      delegate_to: localhost
+      amazon.aws.s3_object:
+        bucket: showcase.artifacts.bucket
+        object: "{{ file }}"
+        src: "files/{{ file }}"
+        mode: put
+      tags:
+        - s3
+    - name: Download from AWS s3
+      amazon.aws.s3_object:
+        bucket: showcase.artifacts.bucket
+        object: "{{ file }}"
+        dest: "{{ file }}"
+        mode: get
+    - name: Delete from AWS s3
+      amazon.aws.s3_object:
+        bucket: showcase.artifacts.bucket
+        object: "{{ file }}"
+        mode: delobj
+    - name: Host FS cleanup
       ansible.builtin.file:
         path: "{{ file }}"
         state: absent

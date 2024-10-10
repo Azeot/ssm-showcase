@@ -18,9 +18,23 @@ ssh-conf: ~/.ssh/config.d/${NAME}.ssh.conf
 payload:
 	dd if=/dev/urandom of=ansible/files/100mb_file.bin bs=1M count=100
 
+install-roles:
+	ansible-galaxy collection install \
+	--collections-path ansible \
+	-r ansible/requirements.yml
+
 run-copy:
 	@ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook \
 	--private-key ~/.ssh/ssm_showcase.pem \
 	-i ansible/inventories/showcase/hosts \
 	--user admin \
+	--tags "normal,untagged" \
+	ansible/ssm_showcase.yml
+
+run-s3: install-roles
+	@ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook \
+	--private-key ~/.ssh/ssm_showcase.pem \
+	-i ansible/inventories/showcase/hosts \
+	--user admin \
+	--tags "s3,untagged" \
 	ansible/ssm_showcase.yml
